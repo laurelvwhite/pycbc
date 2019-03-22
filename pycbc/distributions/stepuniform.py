@@ -19,7 +19,7 @@ This modules provides classes for evaluating uniform distributions.
 import numpy
 from pycbc.distributions import bounded
 
-class Uniform(bounded.BoundedDist):
+class StepUniform(bounded.BoundedDist):
     """
     A uniform distribution on the given parameters. The parameters are
     independent of each other. Instances of this class can be called like
@@ -183,8 +183,8 @@ class Uniform(bounded.BoundedDist):
         Uniform
             A distribution instance from the pycbc.inference.prior module.
         """
-        return super(Uniform, cls).from_config(cp, section, variable_args,
+        return super(StepUniform, cls).from_config(cp, section, variable_args,
                      bounds_required=True)
 
 
-__all__ = ['Uniform']
+__all__ = ['StepUniform']
