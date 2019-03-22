@@ -92,7 +92,7 @@ class StepUniform(bounded.BoundedDist):
     """
     name = 'uniform'
     def __init__(self, **params):
-        super(Uniform, self).__init__(**params)
+        super(StepUniform, self).__init__(**params)
         # compute the norm and save
         # temporarily suppress numpy divide by 0 warning
         numpy.seterr(divide='ignore')
