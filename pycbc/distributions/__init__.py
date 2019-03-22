@@ -29,6 +29,7 @@ from pycbc.distributions.gaussian import Gaussian
 from pycbc.distributions.power_law import UniformPowerLaw, UniformRadius
 from pycbc.distributions.sky_location import UniformSky
 from pycbc.distributions.uniform import Uniform
+from pycbc.distributions.stepuniform import StepUniform
 from pycbc.distributions.uniform_log import UniformLog10
 from pycbc.distributions.masses import UniformComponentMasses
 from pycbc.distributions.spins import IndependentChiPChiEff
@@ -45,6 +46,7 @@ distribs = {
     UniformPowerLaw.name : UniformPowerLaw,
     UniformRadius.name : UniformRadius,
     Uniform.name : Uniform,
+    StepUniform.name : StepUniform,
     UniformAngle.name : UniformAngle,
     CosAngle.name : CosAngle,
     SinAngle.name : SinAngle,
