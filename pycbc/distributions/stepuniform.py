@@ -153,17 +153,30 @@ class StepUniform(bounded.BoundedDist):
             dtype = [(param, float)]
         else:
             dtype = [(p, float) for p in self.params]
-        arr = numpy.zeros(size, dtype=dtype)
-        for (p,_) in dtype:
-            random = numpy.random.randint(2)
-            if random == 0:
-#change bounds a to b               arr[p] = numpy.random.uniform(self._bounds[p][0],
+        if size == 1:
+           arr = numpy.zeros(1, dtype=dtype)
+           random = numpy.random.randint(2)
+           if random == 0:
+              for (p,_) in dtype:
+                 arr[p] = numpy.random.uniform(self.bounds[p][0],
+                                        self._step[p],
+                                        size=1)
+           elif random == 1:
+              for (p,_) in dtype:
+                 arr[p] = numpy.random.uniform(self._step[p],
+                                        self.bounds[p][1],
+                                        size=1)
+        else:
+           arr1 = numpy.zeros(size/2, dtype=dtype)
+           arr2 = numpy.zeros(size/2, dtype=dtype)
+           for (p,_) in dtype:
+               arr1[p] = numpy.random.uniform(self._bounds[p][0],
+                                        self._step[p],
+                                        size=size/2)
+               arr2[p] = numpy.random.uniform(self._step[p],
                                         self._bounds[p][1],
-                                        size=size)
-            elif random == 1:
-#change bounds b to c               arr[p] = numpy.random.uniform(self._bounds[p][0],
-                                        self._bounds[p][1],
-                                        size=size)
+                                        size=size/2)
+        arr = numpy.append(arr1, arr2)
         return arr
 
     @classmethod
