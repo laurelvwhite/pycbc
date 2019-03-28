@@ -90,7 +90,7 @@ class StepUniform(bounded.BoundedDist):
     >>> dist.pdf(phi=60.)
         0.025
     """
-    name = 'uniform'
+    name = 'stepuniform'
     def __init__(self, **params):
         super(StepUniform, self).__init__(**params)
         # compute the norm and save
@@ -155,7 +155,13 @@ class StepUniform(bounded.BoundedDist):
             dtype = [(p, float) for p in self.params]
         arr = numpy.zeros(size, dtype=dtype)
         for (p,_) in dtype:
-            arr[p] = numpy.random.uniform(self._bounds[p][0],
+            random = numpy.random.randint(2)
+            if random == 0:
+#change bounds a to b               arr[p] = numpy.random.uniform(self._bounds[p][0],
+                                        self._bounds[p][1],
+                                        size=size)
+            elif random == 1:
+#change bounds b to c               arr[p] = numpy.random.uniform(self._bounds[p][0],
                                         self._bounds[p][1],
                                         size=size)
         return arr
