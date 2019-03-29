@@ -98,6 +98,8 @@ class StepUniform(bounded.BoundedDist):
         numpy.seterr(divide='ignore')
         self._lognorm = -sum([numpy.log(abs(bnd[1]-bnd[0]))
                                     for bnd in self._bounds.values()])
+        self._norm = 0.5/(self._step-bnd[0]) for bnd in self._bounds.values()
+        self._norm = 0.5/(bnd[1]-self._step) for bnd in self._bounds.values()
         self._norm = numpy.exp(self._lognorm)
         numpy.seterr(divide='warn')
 
