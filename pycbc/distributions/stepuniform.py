@@ -91,25 +91,18 @@ class StepUniform(bounded.BoundedDist):
         0.025
     """
     name = 'stepuniform'
-    def __init__(self, **params):
+    def __init__(self, step=None, **params):
         super(StepUniform, self).__init__(**params)
         # compute the norm and save
         # temporarily suppress numpy divide by 0 warning
         numpy.seterr(divide='ignore')
-        self._lognorm = -sum([numpy.log(abs(bnd[1]-bnd[0]))
-                                    for bnd in self._bounds.values()])
-        self._norm = 0.5/(self._step-bnd[0]) for bnd in self._bounds.values()
-        self._norm = 0.5/(bnd[1]-self._step) for bnd in self._bounds.values()
-        self._norm = numpy.exp(self._lognorm)
+        self._norm1 = (0.5/(step-bnd[0]) for bnd in self._bounds.values())
+        self._norm2 = (0.5/(bnd[1]-step) for bnd in self._bounds.values())
         numpy.seterr(divide='warn')
 
     @property
     def norm(self):
-        return self._norm
-
-    @property
-    def lognorm(self):
-        return self._lognorm
+        return self._norm1 and self._norm2
 
     def _pdf(self, **kwargs):
         """Returns the pdf at the given values. The keyword arguments must
@@ -120,17 +113,6 @@ class StepUniform(bounded.BoundedDist):
             return self._norm
         else:
             return 0.
-
-    def _logpdf(self, **kwargs):
-        """Returns the log of the pdf at the given values. The keyword
-        arguments must contain all of parameters in self's params. Unrecognized
-        arguments are ignored.
-        """
-        if kwargs in self:
-            return self._lognorm
-        else:
-            return -numpy.inf
-
 
     def rvs(self, size=1, param=None):
         """Gives a set of random values drawn from this distribution.
@@ -161,11 +143,11 @@ class StepUniform(bounded.BoundedDist):
            if random == 0:
               for (p,_) in dtype:
                  arr[p] = numpy.random.uniform(self.bounds[p][0],
-                                        self._step[p],
+                                        step,
                                         size=1)
            elif random == 1:
               for (p,_) in dtype:
-                 arr[p] = numpy.random.uniform(self._step[p],
+                 arr[p] = numpy.random.uniform(step,
                                         self.bounds[p][1],
                                         size=1)
         else:
@@ -173,9 +155,9 @@ class StepUniform(bounded.BoundedDist):
            arr2 = numpy.zeros(size/2, dtype=dtype)
            for (p,_) in dtype:
                arr1[p] = numpy.random.uniform(self._bounds[p][0],
-                                        self._step[p],
+                                        step,
                                         size=size/2)
-               arr2[p] = numpy.random.uniform(self._step[p],
+               arr2[p] = numpy.random.uniform(step,
                                         self._bounds[p][1],
                                         size=size/2)
         arr = numpy.append(arr1, arr2)
