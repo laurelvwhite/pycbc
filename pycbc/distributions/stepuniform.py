@@ -13,7 +13,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
-This modules provides classes for evaluating uniform distributions.
+This modules provides classes for evaluating distributions that are uniform in two steps..
 """
 
 import numpy
@@ -21,10 +21,11 @@ from pycbc.distributions import bounded
 
 class StepUniform(bounded.BoundedDist):
     """
-    A uniform distribution on the given parameters. The parameters are
+    A uniform distribution on the given parameters, with 50% of the
+    distribution located between the first bound and the step and 50%
+    located between the step and the second bound. The parameters are
     independent of each other. Instances of this class can be called like
-    a function. By default, logpdf will be called, but this can be changed
-    by setting the class's __call__ method to its pdf method.
+    a function.
 
     Parameters
     ----------
@@ -32,10 +33,13 @@ class StepUniform(bounded.BoundedDist):
         The keyword arguments should provide the names of parameters and their
         corresponding bounds, as either tuples or a `boundaries.Bounds`
         instance.
+    step:
+        An integer or a float value betwen the provided bounds where the
+        distribution should be split.
 
     Attributes
     ----------
-    name : 'uniform'
+    name : 'stepuniform'
         The name of this distribution.
 
     Attributes
@@ -46,24 +50,14 @@ class StepUniform(bounded.BoundedDist):
         A dictionary of the parameter names and their bounds.
     norm : float
         The normalization of the multi-dimensional pdf.
-    lognorm : float
-        The log of the normalization.
+    step : float
+        The point where the distribution is split..
 
     Examples
     --------
-    Create a 2 dimensional uniform distribution:
+    Create a 2 dimensional step-uniform distribution:
 
-    >>> dist = prior.Uniform(mass1=(10.,50.), mass2=(10.,50.))
-
-    Get the log of the pdf at a particular value:
-
-    >>> dist.logpdf(mass1=25., mass2=10.)
-        -7.3777589082278725
-
-    Do the same by calling the distribution:
-
-    >>> dist(mass1=25., mass2=10.)
-        -7.3777589082278725
+    >>> dist = distributions.StepUniform(mass1=(10.,50.), mass2=(10.,50.), step=20.)
 
     Generate some random values:
 
@@ -73,28 +67,13 @@ class StepUniform(bounded.BoundedDist):
                (34.49594465315212, 47.531953033719454)],
               dtype=[('mass1', '<f8'), ('mass2', '<f8')])
 
-    Initialize a uniform distribution using a boundaries.Bounds instance,
-    with cyclic bounds:
-
-    >>> dist = distributions.Uniform(phi=Bounds(10, 50, cyclic=True))
-
-    Apply boundary conditions to a value:
-
-    >>> dist.apply_boundary_conditions(phi=60.)
-        {'mass1': array(20.0)}
-
-    The boundary conditions are applied to the value before evaluating the pdf;
-    note that the following returns a non-zero pdf. If the bounds were not
-    cyclic, the following would return 0:
-
-    >>> dist.pdf(phi=60.)
-        0.025
     """
     name = 'stepuniform'
     def __init__(self, step=None, **params):
         super(StepUniform, self).__init__(**params)
         # compute the norm and save
         # temporarily suppress numpy divide by 0 warning
+        self._step = step
         numpy.seterr(divide='ignore')
         self._norm1 = (0.5/(step-bnd[0]) for bnd in self._bounds.values())
         self._norm2 = (0.5/(bnd[1]-step) for bnd in self._bounds.values())
@@ -110,7 +89,8 @@ class StepUniform(bounded.BoundedDist):
         ignored.
         """
         if kwargs in self:
-            return self._norm
+            print self, kwargs
+            return self._norm1
         else:
             return 0.
 
@@ -137,31 +117,42 @@ class StepUniform(bounded.BoundedDist):
             dtype = [(param, float)]
         else:
             dtype = [(p, float) for p in self.params]
-        if size == 1:
-           arr = numpy.zeros(1, dtype=dtype)
-           random = numpy.random.randint(2)
-           if random == 0:
-              for (p,_) in dtype:
-                 arr[p] = numpy.random.uniform(self.bounds[p][0],
-                                        step,
-                                        size=1)
-           elif random == 1:
-              for (p,_) in dtype:
-                 arr[p] = numpy.random.uniform(step,
-                                        self.bounds[p][1],
-                                        size=1)
-        else:
+        if size%2 == 0:
            arr1 = numpy.zeros(size/2, dtype=dtype)
            arr2 = numpy.zeros(size/2, dtype=dtype)
            for (p,_) in dtype:
                arr1[p] = numpy.random.uniform(self._bounds[p][0],
-                                        step,
+                                        self._step,
                                         size=size/2)
-               arr2[p] = numpy.random.uniform(step,
+               arr2[p] = numpy.random.uniform(self._step,
                                         self._bounds[p][1],
                                         size=size/2)
-        arr = numpy.append(arr1, arr2)
-        return arr
+               arr = numpy.append(arr1, arr2)
+        else:
+           arr1 = numpy.zeros(1, dtype=dtype)
+           random = numpy.random.randint(2)
+           if random == 0:
+              for (p,_) in dtype:
+                 arr1[p] = numpy.random.uniform(self.bounds[p][0],
+                                        self._step,
+                                        size=1)
+           elif random == 1:
+              for (p,_) in dtype:
+                 arr1[p] = numpy.random.uniform(self._step,
+                                        self.bounds[p][1],
+                                        size=1)
+           arr2 = numpy.zeros((size-1)/2, dtype=dtype)
+           arr3 = numpy.zeros((size-1)/2, dtype=dtype)
+           if size-1 != 0:
+              for (p,_) in dtype:
+                  arr1[p] = numpy.random.uniform(self._bounds[p][0],
+                                        self._step,
+                                        size=(size-1)/2)
+                  arr2[p] = numpy.random.uniform(self._step,
+                                        self._bounds[p][1],
+                                        size=(size-1)/2)
+            arr = numpy.append(arr1, arr2, arr3)
+         return arr
 
     @classmethod
     def from_config(cls, cp, section, variable_args):
