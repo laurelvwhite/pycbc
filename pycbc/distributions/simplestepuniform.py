@@ -39,7 +39,7 @@ class SimpleStepUniform(bounded.BoundedDist):
 
     Attributes
     ----------
-    name : 'stepuniform'
+    name : 'simplestepuniform'
         The name of this distribution.
 
     Attributes
@@ -69,8 +69,7 @@ class SimpleStepUniform(bounded.BoundedDist):
 
     """
     name = 'simplestepuniform'
-    def __init__(lwrbnd=None, uprbnd=None, step=None):
-        super(SimpleStepUniform, self).__init__(**params)
+    def __init__(self, lwrbnd=None, uprbnd=None, step=None):
         self._step = step
         self._lwrbnd = lwrbnd
         self._uprbnd = uprbnd
@@ -81,16 +80,17 @@ class SimpleStepUniform(bounded.BoundedDist):
     def norm(self):
         return self._norm1 and self._norm2
 
-    def _pdf(value=None):
+    def pdf(self, value=None):
         """Returns the pdf at the given value.
         """
         self._value = value
-        if self._value < self._step:
-            return self._norm1
-        else:
-            return self._norm2
+        if self._value > self._lwrbnd and self._value < self._uprbnd:
+            if self._value < self._step:
+                return self._norm1
+            else:
+                return self._norm2
 
-    def rvs(self, size=1, param=None):
+    def rvs(self, size=1):
         """Gives a set of random values drawn from this distribution.
 
         Parameters
@@ -109,44 +109,36 @@ class SimpleStepUniform(bounded.BoundedDist):
             given parameter. Otherwise, the array will have an element for each
             parameter in self's params.
         """
-        if param is not None:
-            dtype = [(param, float)]
-        else:
-            dtype = [(p, float) for p in self.params]
         if size%2 == 0:
-            arr = numpy.zeros(size, dtype=dtype)
-            arr1 = numpy.zeros(size/2, dtype=dtype)
-            arr2 = numpy.zeros(size/2, dtype=dtype)
-            for (p,_) in dtype:
-               arr1[p] = numpy.random.uniform(self._bounds[p][0],
+            arr1 = numpy.zeros(size/2)
+            arr2 = numpy.zeros(size/2)
+            arr1 = numpy.random.uniform(self._lwrbnd,
                                         self._step,
                                         size=size/2)
-               arr2[p] = numpy.random.uniform(self._step,
-                                        self._bounds[p][1],
+            arr2 = numpy.random.uniform(self._step,
+                                        self._uprbnd,
                                         size=size/2)
-               arr[p] = numpy.append(arr1[p], arr2[p]) 
+            arr = numpy.append(arr1, arr2) 
             return arr
         else:
-            arr1 = numpy.zeros(1, dtype=dtype)
-            for (p,_) in dtype:
-              random = numpy.random.randint(2)
-              if random == 0:
-                 arr1[p] = numpy.random.uniform(self.bounds[p][0],
+            arr1 = numpy.zeros(1)
+            random = numpy.random.randint(2)
+            if random == 0:
+                 arr1 = numpy.random.uniform(self._lwrbnd,
                                         self._step,
                                         size=1)
-              elif random == 1:
-                 arr1[p] = numpy.random.uniform(self._step,
-                                        self.bounds[p][1],
+            elif random == 1:
+                 arr1 = numpy.random.uniform(self._step,
+                                        self._uprbnd,
                                         size=1)
             if (size-1) > 0:
-               arr2 = numpy.zeros((size-1)/2, dtype=dtype)
-               arr3 = numpy.zeros((size-1)/2, dtype=dtype)
-               for (p,_) in dtype:
-                  arr2[p] = numpy.random.uniform(self._bounds[p][0],
+               arr2 = numpy.zeros((size-1)/2)
+               arr3 = numpy.zeros((size-1)/2)
+               arr2 = numpy.random.uniform(self._lwrbnd,
                                         self._step,
                                         size=(size-1)/2)
-                  arr3[p] = numpy.random.uniform(self._step,
-                                        self._bounds[p][1],
+               arr3 = numpy.random.uniform(self._step,
+                                        self._uprbnd,
                                         size=(size-1)/2)
                arr = numpy.append(arr1, arr2)
                arr = numpy.append(arr, arr3)
@@ -154,4 +146,4 @@ class SimpleStepUniform(bounded.BoundedDist):
             else:
                return arr1
 
-__all__ = ['StepUniform']
+__all__ = ['SimpleStepUniform']
